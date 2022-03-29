@@ -4,6 +4,7 @@ import requests
 import os
 from dotenv import load_dotenv
 import time
+from pprint import pprint
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -46,6 +47,7 @@ handler.setFormatter(formatter)
 
 bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
+
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат"""
     try:
@@ -67,7 +69,6 @@ def get_api_answer(current_timestamp):
         logger.error(f'Ошибка при запросе к основному API: {error}')
 
 
-
 def check_response(response):
     """Проверяет ответ API на корректность"""
     try:
@@ -78,8 +79,10 @@ def check_response(response):
         logger.error(f'API не вернул словарь: {error}')
 
 
+
+
 def parse_status(homework):
-    """Извлекает из информации статус о последней домашней работе"""
+    """Извлекает из информации статус о конкретной домашней работе"""
     homework_name = homework[0].get('homework_name')
     homework_status = homework[0].get('status')
     try:
@@ -99,31 +102,18 @@ def check_tokens():
         return False
 
 
+
 def main():
     """Основная логика работы бота."""
     if check_tokens() is False:
-        send_message(bot, 'нет токенов!')
+        send_message(bot, 'нет токенов')
         logger.critical('Отсутствие обязательных переменных окружения!')
 
     current_timestamp = 0
-    last_message = ''
-    while True:
-        try:
-            response = get_api_answer(current_timestamp)
-            homework = check_response(response)
-            message = parse_status(homework)
-            if last_message != message:
-                send_message(bot, message)
-            else:
-                send_message(bot, 'статус не изменился')
-            time.sleep(RETRY_TIME)
-            last_message = message
-
-        except Exception as error:
-            message = f'Сбой в работе программы: {error}'
-            send_message(bot, message)
-            time.sleep(RETRY_TIME)
-
+    response = get_api_answer(current_timestamp)
+    homework = check_response(response)
+    message = parse_status(homework)
+    send_message(bot, message)
 
 if __name__ == '__main__':
     main()
