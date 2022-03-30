@@ -1,4 +1,3 @@
-from telegram.ext import Updater
 import telegram
 import requests
 import os
@@ -44,7 +43,6 @@ formatter = logging.Formatter(
 )
 handler.setFormatter(formatter)
 
-bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат"""
@@ -57,37 +55,46 @@ def send_message(bot, message):
 
 def get_api_answer(current_timestamp):
     """Делает запрос к API-сервису"""
+    logger.info('Проверяем ответ API')
+    params = {'from_date': current_timestamp}
     try:
-        timestamp = current_timestamp
-        params = {'from_date': timestamp}
         api_answer = requests.get(ENDPOINT, headers=HEADERS, params=params)
+        if api_answer.status_code != 200:
+            logger.error('API возвращает код, отличный от 200')
+            raise Exception('API возвращает код, отличный от 200')
         return api_answer.json()
     except Exception as error:
-        send_message(bot, 'API не отвечает')
         logger.error(f'Ошибка при запросе к основному API: {error}')
-
+        raise
 
 
 def check_response(response):
     """Проверяет ответ API на корректность"""
-    try:
-        isinstance(response.get('homework'), dict)
-        return response.get('homeworks')
-    except Exception as error:
-        send_message(bot, 'api не вернул словарь')
-        logger.error(f'API не вернул словарь: {error}')
+    if not isinstance(response, dict):
+        raise TypeError('Oтвет API не является словарём')
+
+    homeworks = response.get('homeworks')
+    current_date = response.get('current_date')
+    if not (homeworks and current_date):
+        raise KeyError('Нет ключей "homeworks" и "current_date" в словаре')
+
+    if isinstance(homeworks[0], list):
+        logger.error('ДЗ приходят в виде списка')
+        raise TypeError('ДЗ приходят в виде списка')
+    else:
+        return homeworks
 
 
 def parse_status(homework):
-    """Извлекает из информации статус о последней домашней работе"""
-    homework_name = homework[0].get('homework_name')
-    homework_status = homework[0].get('status')
+    """Извлекает из запроса к API статус о последней домашней работе"""
+    homework_status = homework.get('status')
+    homework_name = homework.get('homework_name')
     try:
         verdict = HOMEWORK_STATUSES[homework_status]
         return f'Изменился статус проверки работы "{homework_name}". {verdict}'
     except Exception as error:
-        logger.error(f'Отсутсвие ожидаемых статусов: {error}')
-        send_message(bot, 'Отсутсвие ожидаемых статусов')
+        logger.error(f'Недокументированный статус домашней работы: {error}')
+        raise
 
 
 def check_tokens():
@@ -101,9 +108,11 @@ def check_tokens():
 
 def main():
     """Основная логика работы бота."""
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
+
     if check_tokens() is False:
-        send_message(bot, 'нет токенов!')
         logger.critical('Отсутствие обязательных переменных окружения!')
+        raise KeyError('Нет обязательных переменных окружения!')
 
     current_timestamp = 0
     last_message = ''
@@ -111,10 +120,11 @@ def main():
         try:
             response = get_api_answer(current_timestamp)
             homework = check_response(response)
-            message = parse_status(homework)
+            message = parse_status(homework[0])
             if last_message != message:
                 send_message(bot, message)
             else:
+                logger.debug('статус не изменился')
                 send_message(bot, 'статус не изменился')
             time.sleep(RETRY_TIME)
             last_message = message
