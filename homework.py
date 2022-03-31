@@ -1,12 +1,10 @@
 import sys
-
 import telegram
 import requests
 import os
 from dotenv import load_dotenv
 import time
 import logging
-from logging.handlers import RotatingFileHandler
 
 load_dotenv()
 
@@ -24,14 +22,7 @@ HOMEWORK_STATUSES = {
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    handlers=[
-        logging.FileHandler('my_logger.log', 'w', encoding='utf8'),
-        logging.StreamHandler(sys.stdout),
-    ],
-    format='%(asctime)s, %(levelname)s, %(message)s, %(name)s',
-)
+
 
 
 def send_message(bot, message):
@@ -99,6 +90,15 @@ def check_tokens():
 
 def main():
     """Основная логика работы бота."""
+    logging.basicConfig(
+        level=logging.DEBUG,
+        handlers=[
+            logging.FileHandler('my_logger.log', 'w', encoding='utf8'),
+            logging.StreamHandler(sys.stdout),
+        ],
+        format='%(asctime)s, %(levelname)s, %(message)s, %(name)s',
+    )
+
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
     if check_tokens() is False:
@@ -116,7 +116,7 @@ def main():
                 send_message(bot, message)
             else:
                 logging.debug('Статус не изменился')
-            time.sleep(2)
+            time.sleep(RETRY_TIME)
             last_message = message
 
         except Exception as error:
