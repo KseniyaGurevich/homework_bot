@@ -1,3 +1,5 @@
+import sys
+
 import telegram
 import requests
 import os
@@ -24,47 +26,36 @@ HOMEWORK_STATUSES = {
 
 logging.basicConfig(
     level=logging.DEBUG,
+    handlers=[
+        logging.FileHandler('my_logger.log', 'w', encoding='utf8'),
+        logging.StreamHandler(sys.stdout),
+    ],
     format='%(asctime)s, %(levelname)s, %(message)s, %(name)s',
-    stream=open(r'program.log', 'w', encoding='utf8'),
 )
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-handler = RotatingFileHandler(
-    'my_logger.log',
-    mode='a',
-    maxBytes=50000000,
-    backupCount=5,
-    encoding='utf8',
-)
-logger.addHandler(handler)
-formatter = logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(filename)s'
-)
-handler.setFormatter(formatter)
 
 
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат"""
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
-        logger.info(f'Сообщение в Telegram отправлено!')
+        logging.info(f'Сообщение в Telegram отправлено!')
     except Exception as error:
-        logger.error(f'Бот не смог отправить сообщение: {error}')
+        logging.error(f'Бот не смог отправить сообщение: {error}')
+        raise Exception('Сообщение в Telegram не отправлено!')
 
 
 def get_api_answer(current_timestamp):
     """Делает запрос к API-сервису"""
-    logger.info('Проверяем ответ API')
+    logging.info('Проверяем ответ API')
     params = {'from_date': current_timestamp}
     try:
         api_answer = requests.get(ENDPOINT, headers=HEADERS, params=params)
         if api_answer.status_code != 200:
-            logger.error('API возвращает код, отличный от 200')
+            logging.error('API возвращает код, отличный от 200')
             raise Exception('API возвращает код, отличный от 200')
         return api_answer.json()
     except Exception as error:
-        logger.error(f'Ошибка при запросе к основному API: {error}')
+        logging.error(f'Ошибка при запросе к основному API: {error}')
         raise
 
 
@@ -79,7 +70,7 @@ def check_response(response):
         raise KeyError('Нет ключей "homeworks" и "current_date" в словаре')
 
     if isinstance(homeworks[0], list):
-        logger.error('ДЗ приходят в виде списка')
+        logging.error('ДЗ приходят в виде списка')
         raise TypeError('ДЗ приходят в виде списка')
     else:
         return homeworks
@@ -93,7 +84,7 @@ def parse_status(homework):
         verdict = HOMEWORK_STATUSES[homework_status]
         return f'Изменился статус проверки работы "{homework_name}". {verdict}'
     except Exception as error:
-        logger.error(f'Недокументированный статус домашней работы: {error}')
+        logging.error(f'Недокументированный статус домашней работы: {error}')
         raise
 
 
@@ -111,7 +102,7 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
     if check_tokens() is False:
-        logger.critical('Отсутствие обязательных переменных окружения!')
+        logging.critical('Отсутствие обязательных переменных окружения!')
         raise KeyError('Нет обязательных переменных окружения!')
 
     current_timestamp = 0
@@ -124,9 +115,8 @@ def main():
             if last_message != message:
                 send_message(bot, message)
             else:
-                logger.debug('статус не изменился')
-                send_message(bot, 'статус не изменился')
-            time.sleep(RETRY_TIME)
+                logging.debug('Статус не изменился')
+            time.sleep(2)
             last_message = message
 
         except Exception as error:
