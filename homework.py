@@ -32,7 +32,7 @@ def send_message(bot, message):
         logging.info(f'Сообщение в Telegram отправлено!')
     except Exception as error:
         logging.error(f'Бот не смог отправить сообщение: {error}')
-        raise Exception('Сообщение в Telegram не отправлено!')
+        raise Exception(f'Сообщение в Telegram не отправлено: {error}')
 
 
 def get_api_answer(current_timestamp):
@@ -83,6 +83,7 @@ def check_tokens():
     """Проверяет доступность переменных окружения"""
     check_tokens = [TELEGRAM_TOKEN, PRACTICUM_TOKEN, TELEGRAM_CHAT_ID]
     if all([token != None for token in check_tokens]) is True:
+        logging.info('Токены доступны')
         return True
     else:
         return False
