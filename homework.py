@@ -23,8 +23,6 @@ HOMEWORK_STATUSES = {
 }
 
 
-
-
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат"""
     try:
@@ -81,8 +79,8 @@ def parse_status(homework):
 
 def check_tokens():
     """Проверяет доступность переменных окружения"""
-    check_tokens = [TELEGRAM_TOKEN, PRACTICUM_TOKEN, TELEGRAM_CHAT_ID]
-    if all([token != None for token in check_tokens]) is True:
+    tokens = [TELEGRAM_TOKEN, PRACTICUM_TOKEN, TELEGRAM_CHAT_ID]
+    if all([token is not None for token in tokens]) is True:
         logging.info('Токены доступны')
         return True
     else:
