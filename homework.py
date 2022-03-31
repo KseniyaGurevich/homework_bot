@@ -24,17 +24,17 @@ HOMEWORK_STATUSES = {
 
 
 def send_message(bot, message):
-    """Отправляет сообщение в Telegram чат"""
+    """Отправляет сообщение в Telegram чат."""
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
-        logging.info(f'Сообщение в Telegram отправлено!')
+        logging.info('Сообщение в Telegram отправлено!')
     except Exception as error:
         logging.error(f'Бот не смог отправить сообщение: {error}')
         raise Exception(f'Сообщение в Telegram не отправлено: {error}')
 
 
 def get_api_answer(current_timestamp):
-    """Делает запрос к API-сервису"""
+    """Делает запрос к API-сервису."""
     logging.info('Проверяем ответ API')
     params = {'from_date': current_timestamp}
     try:
@@ -49,7 +49,7 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """Проверяет ответ API на корректность"""
+    """Проверяет ответ API на корректность."""
     if not isinstance(response, dict):
         raise TypeError('Oтвет API не является словарём')
 
@@ -66,7 +66,7 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """Извлекает из запроса к API статус о последней домашней работе"""
+    """Извлекает из запроса к API статус о последней домашней работе."""
     homework_status = homework.get('status')
     homework_name = homework.get('homework_name')
     try:
@@ -78,7 +78,7 @@ def parse_status(homework):
 
 
 def check_tokens():
-    """Проверяет доступность переменных окружения"""
+    """Проверяет доступность переменных окружения."""
     tokens = [TELEGRAM_TOKEN, PRACTICUM_TOKEN, TELEGRAM_CHAT_ID]
     if all([token is not None for token in tokens]) is True:
         logging.info('Токены доступны')
@@ -101,7 +101,7 @@ def main():
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
     if check_tokens() is False:
-        logging.critical('Отсутствие обязательных переменных окружения!')
+        logging.critical('Нет обязательных переменных окружения!')
         raise KeyError('Нет обязательных переменных окружения!')
 
     current_timestamp = 0
