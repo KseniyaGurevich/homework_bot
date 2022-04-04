@@ -7,7 +7,12 @@ import time
 import logging
 from http import HTTPStatus
 import datetime
-from exceptions import *
+from exceptions import (NotForSendingError,
+                        NotSendingMessageError,
+                        NotKeysError,
+                        TypeListError,
+                        UndocumentedStatusHomework,
+                        ResponseStatusAPINot200)
 
 load_dotenv()
 
