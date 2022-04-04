@@ -42,7 +42,7 @@ def get_api_answer(current_timestamp):
     try:
         api_answer = requests.get(ENDPOINT, headers=HEADERS, params=params)
         if api_answer.status_code == HTTPStatus.UNAUTHORIZED:
-            raise KeyError(f'<PRACTICUM_TOKEN> указан неверно')
+            raise KeyError('<PRACTICUM_TOKEN> указан неверно')
         if api_answer.status_code != HTTPStatus.OK:
             raise Exception(
                 f'API недоступен, код ошибки: {api_answer.status_code}'
@@ -119,7 +119,7 @@ def main():
         raise KeyError('Нет нужных токенов')
 
     from_date = 1638349200
-    current_timestamp = int(time.time()-from_date)
+    current_timestamp = int(time.time() - from_date)
 
     last_message = ''
     while True:
