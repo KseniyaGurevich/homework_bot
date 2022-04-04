@@ -7,7 +7,7 @@ import time
 import logging
 from http import HTTPStatus
 import datetime
-from exceptions import MyCustomError
+from exceptions import *
 
 load_dotenv()
 
@@ -31,8 +31,9 @@ def send_message(bot, message):
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logging.info('Сообщение в Telegram отправлено!')
-    except MyCustomError as error:
-        raise MyCustomError(f'Бот не смог отправить сообщение: {error}')
+    except NotSendingMessageError as error:
+        logging.debug(f'Бот не смог отправить сообщение: {error}')
+        raise NotSendingMessageError
 
 
 def get_api_answer(current_timestamp):
@@ -42,9 +43,13 @@ def get_api_answer(current_timestamp):
     try:
         api_answer = requests.get(ENDPOINT, headers=HEADERS, params=params)
         if api_answer.status_code == HTTPStatus.UNAUTHORIZED:
+            logging.critical('<PRACTICUM_TOKEN> указан неверно')
             raise KeyError('<PRACTICUM_TOKEN> указан неверно')
         if api_answer.status_code != HTTPStatus.OK:
-            raise Exception(
+            logging.debug(
+                f'API недоступен, код ошибки: {api_answer.status_code}'
+            )
+            raise ResponseStatusAPINot200(
                 f'API недоступен, код ошибки: {api_answer.status_code}'
             )
         return api_answer.json()
@@ -56,18 +61,18 @@ def get_api_answer(current_timestamp):
 def check_response(response):
     """Проверяет ответ API на корректность."""
     if not isinstance(response, dict):
+        logging.error('Oтвет API не является словарём')
         raise TypeError('Oтвет API не является словарём')
 
     homeworks = response.get('homeworks')
     current_date = response.get('current_date')
     if not (homeworks and current_date):
-        raise MyCustomError(
-            'Нет данных по ключам <homeworks> или <current_date>'
-        )
+        logging.debug('Нет данных по ключам <homeworks> или <current_date>')
+        raise NotKeysError
 
     if isinstance(homeworks[0], list):
-        logging.error('ДЗ приходят в виде списка')
-        raise MyCustomError('ДЗ приходят в виде списка')
+        logging.debug('ДЗ приходят в виде списка')
+        raise TypeListError
     else:
         return homeworks
 
@@ -79,17 +84,15 @@ def parse_status(homework):
     try:
         verdict = HOMEWORK_STATUSES[homework_status]
         return f'Изменился статус проверки работы "{homework_name}". {verdict}'
-    except MyCustomError:
-        raise MyCustomError('Недокументированный статус домашней работы')
+    except UndocumentedStatusHomework:
+        logging.debug('Недокументированный статус домашней работы')
+        raise UndocumentedStatusHomework
 
 
 def check_tokens():
     """Проверяет доступность переменных окружения."""
     tokens_status = all([TELEGRAM_TOKEN, PRACTICUM_TOKEN, TELEGRAM_CHAT_ID])
-    if not TELEGRAM_TOKEN or not PRACTICUM_TOKEN or not TELEGRAM_CHAT_ID:
-        return False
-    else:
-        return tokens_status
+    return tokens_status
 
 
 def main():
@@ -109,14 +112,13 @@ def main():
                 '%(lineno)s'),
     )
 
-    bot = telegram.Bot(token=TELEGRAM_TOKEN)
-
     if check_tokens() is True:
         logging.info('Все токены доступны')
     else:
         logging.critical('Нет нужных токенов')
-        send_message(bot, 'Нет нужных токенов')
         raise KeyError('Нет нужных токенов')
+
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
     from_date = 1638349200
     current_timestamp = int(time.time() - from_date)
@@ -144,9 +146,8 @@ def main():
             )
             current_timestamp = int(date_updated_datetime.timestamp())
 
-        except MyCustomError as error:
-            message = f'Сбой в работе программы: {error}'
-            logging.debug(message)
+        except NotForSendingError as error:
+            logging.debug(f'Сбой в работе программы: {error}')
 
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
