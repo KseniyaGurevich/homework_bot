@@ -61,7 +61,9 @@ def check_response(response):
     homeworks = response.get('homeworks')
     current_date = response.get('current_date')
     if not (homeworks and current_date):
-        raise MyCustomError('Нет данных по ключам <homeworks> или <current_date>')
+        raise MyCustomError(
+            'Нет данных по ключам <homeworks> или <current_date>'
+        )
 
     if isinstance(homeworks[0], list):
         logging.error('ДЗ приходят в виде списка')
@@ -98,7 +100,13 @@ def main():
             logging.FileHandler('my_logging.log', 'w', encoding='utf8'),
             logging.StreamHandler(sys.stdout),
         ],
-        format='%(asctime)s - %(levelname)s - %(message)s - %(name)s - %(filename)s - %(funcName)s - %(lineno)s',
+        format=('%(asctime)s - '
+                '%(levelname)s - '
+                '%(message)s - '
+                '%(name)s - '
+                '%(filename)s - '
+                '%(funcName)s - '
+                '%(lineno)s'),
     )
 
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
@@ -107,7 +115,7 @@ def main():
         logging.info('Все токены доступны')
     else:
         logging.critical('Нет нужных токенов')
-        send_message('Нет нужных токенов')
+        send_message(bot, 'Нет нужных токенов')
         raise KeyError('Нет нужных токенов')
 
     from_date = 1638349200
@@ -125,8 +133,15 @@ def main():
                 logging.debug('Статус не изменился')
             last_message = message
 
-            date_updated = homework[0].get('date_updated').replace('T', ' ').replace('Z', '')
-            date_updated_datetime = datetime.datetime.fromisoformat(date_updated)
+            date_updated = (
+                homework[0].
+                get('date_updated').
+                replace('T', ' ').
+                replace('Z', '')
+            )
+            date_updated_datetime = (
+                datetime.datetime.fromisoformat(date_updated)
+            )
             current_timestamp = int(date_updated_datetime.timestamp())
 
         except MyCustomError as error:
