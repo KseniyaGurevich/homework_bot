@@ -15,6 +15,4 @@
 
 - Установите зависимости из файла requirements.txt: `pip install -r requirements.txt`
 
-- Выполните миграции: `python manage.py migrate`
-
 - Запустите проект: `python manage.py runserver`
