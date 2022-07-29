@@ -1,18 +1,44 @@
 # Бот-ассистент
 ### Описание
 - Telegram-бот раз в 10 минут обращается к API сервиса Практикум.Домашка и проверяет статус отправленной на ревью домашней работы: взята ли в ревью, проверена ли, а если проверена — то принял её ревьюер или вернул на доработку.
-- При обновлении статуса анализировать ответ API и отправлять вам соответствующее уведомление в Telegram.
+- При обновлении статуса анализирует ответ API и отправляет мне соответствующее уведомление в Telegram.
 - Бот логирут свою работу и сообщает мне о важных проблемах сообщением в Telegram.
 
 ### Технологии в проекте
 - Python 3.7
 ### Запуск проекта в dev-режиме
-- Клонируйте репозиторий: `git clone git@github.com:KseniyaGurevich/homework_bot.git`
+- Клонировать репозиторий и перейти в него в командной строке:
 
-- Установите и активируйте виртуальное окружение.
+```
+git clone git@github.com:KseniyaGurevich/homework_bot.git
+```
 
-- Обновите pip: `python -m pip install --upgrade pip`
+```
+cd homework_bot
+```
 
-- Установите зависимости из файла requirements.txt: `pip install -r requirements.txt`
+- Cоздать и активировать виртуальное окружение:
 
-- Запустите проект: `python manage.py runserver`
+```
+python3 -m venv env
+```
+
+```
+source env/bin/activate
+```
+
+```
+python3 -m pip install --upgrade pip
+```
+
+- Установить зависимости из файла requirements.txt:
+
+```
+pip install -r requirements.txt
+```
+
+- Запустить проект:
+
+```
+python3 manage.py runserver
+```
